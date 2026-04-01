@@ -9,6 +9,20 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      /* PREVENT TEXT SELECTION - fully unselectable */
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Prevent any text selection on all elements */
+    html, body, div, p, span, h1, h2, h3, button, .letter-content, .love-message {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
     }
 
     body {
@@ -65,6 +79,8 @@
       color: #a13e4a;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       font-family: inherit;
+      user-select: none !important;
+      -webkit-user-select: none !important;
     }
 
     .tab-btn.active {
@@ -128,6 +144,7 @@
       -webkit-background-clip: text;
       color: transparent;
       margin-bottom: 0.3rem;
+      pointer-events: none;
     }
 
     .sub {
@@ -171,6 +188,8 @@
       transition: 0.2s;
       font-family: inherit;
       box-shadow: 0 5px 0 #b0a09c;
+      user-select: none !important;
+      -webkit-user-select: none !important;
     }
 
     .btn-yes {
@@ -251,6 +270,8 @@
       font-weight: bold;
       font-family: inherit;
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      user-select: none !important;
+      -webkit-user-select: none !important;
     }
 
     .love-yes {
@@ -281,7 +302,7 @@
       animation: fadeIn 0.6s;
     }
 
-    /* Letter Styles */
+    /* Letter Styles - fully protected */
     .letter-container {
       background: #fffef7;
       border-radius: 30px;
@@ -346,6 +367,7 @@
       padding: 10px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.2);
       transition: transform 0.3s;
+      user-select: none !important;
     }
 
     .floating-envelope:hover {
@@ -373,6 +395,7 @@
       cursor: pointer;
       font-weight: bold;
       transition: 0.2s;
+      user-select: none !important;
     }
 
     .restart-btn:hover {
@@ -419,6 +442,26 @@
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
+    }
+
+    /* Disable text selection on all interactive elements */
+    button, .btn, .love-btn, .tab-btn, .restart-btn, .floating-envelope {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    /* Protect all text containers */
+    .game-container, .letter-content, .love-message, .question-text, 
+    .progress-area, .sub, footer, .romantic-message, .finale-box,
+    .letter-container, .letter-header, .letter-signature, p, span, div {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    /* Disable image dragging */
+    img {
+      user-drag: none;
+      -webkit-user-drag: none;
     }
 
     @media (max-width: 550px) {
@@ -472,6 +515,54 @@
 </div>
 
 <script>
+  // DISABLE ALL COPY ATTEMPTS
+  document.addEventListener('copy', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  
+  document.addEventListener('cut', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  
+  document.addEventListener('paste', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  
+  document.addEventListener('selectstart', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  
+  document.addEventListener('dragstart', function(e) {
+    e.preventDefault();
+    return false;
+  });
+  
+  // Also disable keyboard shortcuts for copy (Ctrl+C, Ctrl+X, etc.)
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 'v' || e.key === 'V')) {
+      e.preventDefault();
+      return false;
+    }
+    // Also disable F12 and Ctrl+Shift+I for dev tools
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  // Disable text selection via mouse
+  document.body.style.webkitUserSelect = 'none';
+  document.body.style.userSelect = 'none';
+  
   // Game completion status
   let game1Completed = false;
   let game2Completed = false;
