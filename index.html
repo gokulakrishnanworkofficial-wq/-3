@@ -354,7 +354,7 @@
       padding-top: 20px;
     }
 
-    /* Memory Gallery Styles - NEW */
+    /* Memory Gallery Styles */
     .memory-gallery {
       padding: 15px 0;
     }
@@ -412,6 +412,63 @@
       font-size: 0.8rem;
       color: #b85c6b;
       margin-top: 20px;
+    }
+    
+    /* Music Player Styles */
+    .music-player {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 50px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      z-index: 1000;
+      border: 1px solid rgba(255,107,107,0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .music-player:hover {
+      transform: scale(1.02);
+    }
+    
+    .music-icon {
+      font-size: 24px;
+      animation: musicPulse 1.5s infinite;
+    }
+    
+    @keyframes musicPulse {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+    
+    .music-info {
+      font-size: 12px;
+      font-weight: 600;
+      color: #c23b4b;
+    }
+    
+    .music-control {
+      background: #ff6b6b;
+      border: none;
+      border-radius: 30px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: inherit;
+    }
+    
+    .music-control:hover {
+      background: #ff5252;
+      transform: scale(0.95);
     }
     
     .floating-envelope {
@@ -505,7 +562,7 @@
     }
 
     /* Disable text selection on all interactive elements */
-    button, .btn, .love-btn, .tab-btn, .restart-btn, .floating-envelope, .memory-card {
+    button, .btn, .love-btn, .tab-btn, .restart-btn, .floating-envelope, .memory-card, .music-player {
       user-select: none !important;
       -webkit-user-select: none !important;
     }
@@ -533,6 +590,9 @@
       .tab-btn { padding: 6px 12px; font-size: 0.75rem; }
       .letter-content { font-size: 0.95rem; }
       .photo-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+      .music-player { bottom: 12px; left: 12px; padding: 6px 12px; }
+      .music-info { font-size: 10px; }
+      .music-icon { font-size: 20px; }
     }
   </style>
 </head>
@@ -568,7 +628,7 @@
       <div id="game3UI"></div>
     </div>
     
-    <!-- NEW: Memory Pics Gallery -->
+    <!-- Memory Pics Gallery -->
     <div id="game4Content" class="hidden">
       <h1>📸 OUR PRECIOUS MEMORIES 🖼️</h1>
       <div class="sub">💞 every picture tells our love story 💞</div>
@@ -578,12 +638,113 @@
   </div>
 </div>
 
+<!-- Music Player -->
+<div class="music-player" id="musicPlayer">
+  <div class="music-icon" id="musicIcon">🎵</div>
+  <div class="music-info" id="musicInfo">Romantic Melody</div>
+  <button class="music-control" id="musicToggleBtn">🔊 Play</button>
+</div>
+
 <!-- Floating Envelope -->
 <div class="floating-envelope" id="envelopeBtn">
   💌
 </div>
 
 <script>
+  // ==================== BACKGROUND MUSIC ====================
+  // 🎵 TO CHANGE THE SONG: Replace the src URL below with your own music file link
+  // You can use:
+  // - MP3 file from your computer (upload to a free host like file.io or use local path)
+  // - Any direct MP3 URL from the internet
+  // - YouTube to MP3 converted links (make sure they are direct .mp3 URLs)
+  // 
+  // Examples:
+  // "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" (demo)
+  // "music/our-song.mp3" (local file)
+  // "https://your-domain.com/romantic-song.mp3" (your hosted file)
+  
+  const SONG_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"; // ← CHANGE THIS TO YOUR SONG!
+  // Recommended: Use a romantic song MP3 link. You can upload your song to:
+  // - Google Drive (get direct download link)
+  // - Dropbox (change ?dl=0 to ?dl=1 for direct link)
+  // - GitHub (raw file URL)
+  // - Any MP3 hosting service
+  
+  let audio = null;
+  let isPlaying = false;
+  
+  function initAudio() {
+    if (audio === null) {
+      audio = new Audio(SONG_URL);
+      audio.loop = true;
+      audio.volume = 0.5;
+      
+      // Handle autoplay restrictions - most browsers require user interaction first
+      audio.addEventListener('canplaythrough', () => {
+        console.log('Music ready');
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('Music error:', e);
+        document.getElementById("musicInfo").innerHTML = "⚠️ Song unavailable";
+      });
+    }
+  }
+  
+  function playMusic() {
+    initAudio();
+    audio.play().then(() => {
+      isPlaying = true;
+      document.getElementById("musicToggleBtn").innerHTML = "🔇 Pause";
+      document.getElementById("musicIcon").innerHTML = "🎶";
+      document.getElementById("musicInfo").style.color = "#ff6b6b";
+    }).catch(err => {
+      console.log("Autoplay prevented - waiting for user interaction");
+      // Browser blocked autoplay, show message
+      document.getElementById("musicInfo").innerHTML = "Click Play to start music 🎵";
+    });
+  }
+  
+  function pauseMusic() {
+    if (audio) {
+      audio.pause();
+      isPlaying = false;
+      document.getElementById("musicToggleBtn").innerHTML = "🔊 Play";
+      document.getElementById("musicIcon").innerHTML = "🎵";
+      document.getElementById("musicInfo").style.color = "#c23b4b";
+    }
+  }
+  
+  function toggleMusic() {
+    initAudio();
+    if (isPlaying) {
+      pauseMusic();
+    } else {
+      playMusic();
+    }
+  }
+  
+  // Setup music toggle button
+  document.getElementById("musicToggleBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleMusic();
+  });
+  
+  // Try to autoplay on first user interaction (click anywhere)
+  let musicStarted = false;
+  function startMusicOnFirstInteraction() {
+    if (!musicStarted) {
+      musicStarted = true;
+      playMusic();
+      document.removeEventListener('click', startMusicOnFirstInteraction);
+      document.removeEventListener('touchstart', startMusicOnFirstInteraction);
+    }
+  }
+  
+  // Wait for user interaction to start music (browsers require this)
+  document.addEventListener('click', startMusicOnFirstInteraction);
+  document.addEventListener('touchstart', startMusicOnFirstInteraction);
+  
   // DISABLE ALL COPY ATTEMPTS & PROTECTION
   document.addEventListener('copy', function(e) { e.preventDefault(); return false; });
   document.addEventListener('cut', function(e) { e.preventDefault(); return false; });
@@ -913,19 +1074,12 @@
   
   // ==================== GAME 4: MEMORY PICS GALLERY ====================
   // 📸 EDIT YOUR COUPLE PHOTOS HERE: Replace the image URLs with your own!
-  // You can use free image hosting or local images. Just update the "src" fields below.
-  // Each object: src (image link), caption (description)
   const memoryImages = [
     { src: "https://picsum.photos/id/20/400/400", caption: "✨ Our first magical moment ✨" },
     { src: "https://picsum.photos/id/169/400/400", caption: "🌅 Sunset walks with you 🌅" },
     { src: "https://picsum.photos/id/58/400/400", caption: "💕 Laughing together forever 💕" },
     { src: "https://picsum.photos/id/155/400/400", caption: "🌟 Adventures hand in hand 🌟" }
   ];
-  
-  // To change pictures: 
-  // 1. Replace the "src" URLs with your own image links (e.g., "https://your-image-link.jpg")
-  // 2. You can add more objects to the array following the same pattern.
-  // 3. Supported formats: jpg, png, gif, webp. Recommended size: square 400x400.
   
   function renderGame4() {
     const container = document.getElementById("game4UI");
@@ -960,7 +1114,6 @@
     
     container.innerHTML = galleryHtml;
     
-    // Add click effect on memory cards
     document.querySelectorAll('.memory-card').forEach(card => {
       card.addEventListener('click', () => {
         triggerMiniConfetti();
@@ -1068,7 +1221,7 @@
     renderGame1();
   }
 
-  // ==================== Tab Switching (now with 4 tabs) ====================
+  // ==================== Tab Switching ====================
   function switchToGame1() {
     document.getElementById("game1Content").classList.remove("hidden");
     document.getElementById("game2Content").classList.add("hidden");
@@ -1144,7 +1297,7 @@
 
   // Floating hearts on click
   document.body.addEventListener('click', function(e) {
-    if(e.target.closest('.btn') || e.target.closest('.love-btn') || e.target.closest('.floating-envelope') || e.target.closest('.memory-card')) return;
+    if(e.target.closest('.btn') || e.target.closest('.love-btn') || e.target.closest('.floating-envelope') || e.target.closest('.memory-card') || e.target.closest('.music-player')) return;
     const heart = document.createElement('div');
     heart.innerHTML = '❤️';
     heart.style.position = 'absolute';
