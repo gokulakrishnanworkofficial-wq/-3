@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>💕 Romantic Games for My Love 💕</title>
+  <title>💕 Romantic Journey for My Love 💕</title>
   <style>
     * {
       margin: 0;
@@ -78,6 +78,29 @@
       transform: translateY(-3px);
     }
 
+    .tab-btn.completed {
+      background: linear-gradient(135deg, #4caf50, #45a049);
+      color: white;
+      position: relative;
+    }
+
+    .tab-btn.completed::after {
+      content: "✓";
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: gold;
+      color: #333;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
     /* Main container */
     .game-container {
       background: rgba(255, 255, 255, 0.92);
@@ -114,7 +137,7 @@
       font-size: 1rem;
     }
 
-    /* Game 1 Styles (Romantic Q&A) */
+    /* Game 1 Styles */
     .question-card {
       background: white;
       border-radius: 48px;
@@ -190,7 +213,7 @@
       transition: width 0.3s ease;
     }
 
-    /* Game 2 Styles (Do You Love Me - NO button runs) */
+    /* Game 2 Styles */
     .love-game-box {
       padding: 20px;
     }
@@ -248,10 +271,6 @@
       transition: all 0.1s ease;
     }
 
-    .love-no:hover {
-      cursor: pointer;
-    }
-
     .love-message {
       background: linear-gradient(135deg, #fff5f5, #ffe0e7);
       border-radius: 40px;
@@ -284,6 +303,25 @@
       background: #5e3a42;
     }
 
+    .grand-finale {
+      background: linear-gradient(135deg, #ffd89b, #c31432);
+      border-radius: 40px;
+      padding: 30px;
+      margin-top: 20px;
+      animation: grandEntrance 1s ease;
+    }
+
+    @keyframes grandEntrance {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
     footer {
       margin-top: 25px;
       font-size: 0.75rem;
@@ -292,6 +330,19 @@
 
     .hidden {
       display: none;
+    }
+
+    .auto-next-message {
+      background: rgba(255, 107, 107, 0.2);
+      border-radius: 30px;
+      padding: 10px;
+      margin-top: 15px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
     @media (max-width: 550px) {
@@ -320,7 +371,7 @@
       <div id="game1UI"></div>
     </div>
 
-    <!-- Game 2: Do You Love Me? (NO button runs away) -->
+    <!-- Game 2: Do You Love Me? -->
     <div id="game2Content" class="hidden">
       <h1>💗 DO YOU LOVE ME? 💗</h1>
       <div class="sub">🎀 there's only one right answer... 🎀</div>
@@ -331,6 +382,11 @@
 </div>
 
 <script>
+  // Game completion status
+  let game1Completed = false;
+  let game2Completed = false;
+  let autoTransitionTimeout = null;
+
   // ==================== GAME 1: Romantic Questions ====================
   const questions = [
     { text: "Do you believe in love at first sight?", emoji: "✨😍" },
@@ -345,23 +401,23 @@
   const finalMessages = {
     perfect: {
       title: "💞 YES! A THOUSAND TIMES YES! 💞",
-      message: "You said YES to everything, and my heart is exploding with joy! 🌟 You are my everything, my dream, my forever. Even though miles may separate us, our souls are dancing in the same rhythm. I love you more than words can ever express.",
-      gift: "🎁✨ SURPRISE! ✨🎁\nA romantic virtual date night is waiting — and something special is coming your way! 🤫❤️"
+      message: "You said YES to everything, and my heart is exploding with joy! 🌟 You are my everything, my dream, my forever.",
+      gift: "🎁✨ SURPRISE! ✨🎁\nA romantic virtual date night is waiting!"
     },
     good: {
       title: "💖 My Heart Belongs to You 💖",
-      message: "You lit up my world with your sweet answers. Every YES is a reminder of how magical 'us' really is. Long distance is just a test, and we are passing with flying colors!",
-      gift: "🎁 A little surprise: I've made a private playlist of 'our songs' just for you! 📝💿"
+      message: "You lit up my world with your sweet answers. Every YES is a reminder of how magical 'us' really is.",
+      gift: "🎁 A little surprise: I've made a private playlist of 'our songs' just for you!"
     },
     sweet: {
       title: "🌹 You & Me, A Beautiful Story 🌹",
-      message: "Your love shines brighter than stars. Our journey is unique, full of laughter, understanding, and warmth. I adore every piece of you!",
-      gift: "🎁 Surprise: I'll send you a voice note every morning this week to wake you with love! 🎧💕"
+      message: "Your love shines brighter than stars. Our journey is unique, full of laughter and warmth.",
+      gift: "🎁 Surprise: I'll send you a voice note every morning this week!"
     },
     always: {
       title: "💗 My Love for You is Infinite 💗",
-      message: "Every answer, every moment — I treasure it all. Thank you for playing, for being you. This game is just a tiny glimpse of how much I adore you.",
-      gift: "🎁 Secret unlocked: I'll be ordering your favorite treat delivered to you — keep an eye out! 🍫🍕"
+      message: "Every answer, every moment — I treasure it all. Thank you for being you.",
+      gift: "🎁 Secret unlocked: I'll be ordering your favorite treat delivered to you!"
     }
   };
 
@@ -376,12 +432,22 @@
     return "always";
   }
 
+  function showAutoTransitionMessage(message) {
+    const container = document.getElementById("game1UI");
+    const autoMsg = document.createElement('div');
+    autoMsg.className = 'auto-next-message';
+    autoMsg.innerHTML = message;
+    container.appendChild(autoMsg);
+    setTimeout(() => autoMsg.remove(), 3000);
+  }
+
   function renderGame1() {
     const container = document.getElementById("game1UI");
     if (game1Finished) {
       const categoryKey = getFinalCategory(totalYesCount, questions.length);
       const final = finalMessages[categoryKey];
       triggerMiniConfetti();
+      
       container.innerHTML = `
         <div class="finale-box">
           <h2 style="color:#c23b4b; margin: 0.5rem 0;">${final.title}</h2>
@@ -392,13 +458,35 @@
           <div style="background: #ffe6ea; border-radius: 60px; padding: 12px; margin: 10px 0;">
             🥰 Your YES count: ${totalYesCount} out of ${questions.length} 🥰
           </div>
+          <div class="auto-next-message" style="background: #ff6b6b; color: white;">
+            ✨ Moving to the next game in 3 seconds... ✨
+          </div>
           <button class="restart-btn" id="restartGame1Btn">⟳ Play Again ⟳</button>
         </div>
       `;
+      
       document.getElementById("restartGame1Btn")?.addEventListener("click", () => {
+        if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
         resetGame1();
         renderGame1();
+        // Reset completion status
+        game1Completed = false;
+        document.getElementById("tabGame1").classList.remove("completed");
       });
+      
+      // Mark game as completed
+      game1Completed = true;
+      document.getElementById("tabGame1").classList.add("completed");
+      document.getElementById("tabGame1").classList.remove("active");
+      document.getElementById("tabGame2").classList.add("active");
+      
+      // Auto transition to Game 2 after 3 seconds
+      if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+      autoTransitionTimeout = setTimeout(() => {
+        switchToGame2();
+        // Auto-start Game 2 hint
+        showGame2Hint();
+      }, 3000);
       return;
     }
 
@@ -444,12 +532,52 @@
     game1Finished = false;
   }
 
-  // ==================== GAME 2: DO YOU LOVE ME? (NO button runs away) ====================
+  // ==================== GAME 2: DO YOU LOVE ME? ====================
   let loveMessageShown = false;
   let noButtonAttempts = 0;
 
+  function showGame2Hint() {
+    const hintDiv = document.getElementById("loveHint");
+    if (hintDiv && !loveMessageShown) {
+      hintDiv.innerHTML = "💕 Game 2 is ready! Try to click the NO button... if you can! 💕";
+      setTimeout(() => {
+        if (hintDiv && !loveMessageShown) hintDiv.innerHTML = "💋 (the NO button is feeling shy...) 💋";
+      }, 3000);
+    }
+  }
+
+  function showGrandFinale() {
+    const container = document.getElementById("game2UI");
+    triggerHeavyConfetti();
+    
+    container.innerHTML = `
+      <div class="grand-finale">
+        <div style="font-size: 4rem;">💑💖💑</div>
+        <h1 style="font-size: 2rem; color: white; margin: 20px 0;">YOU COMPLETED THE JOURNEY! 🎉</h1>
+        <div class="love-message" style="background: rgba(255,255,255,0.9);">
+          <p style="font-size: 1.4rem;">You answered all questions with love and proved your devotion! 💕</p>
+          <p style="margin-top: 15px;">Our love story is complete, but our journey together is just beginning! 🌟</p>
+          <p style="margin-top: 15px; font-size: 1.2rem;">I LOVE YOU MORE THAN WORDS CAN EXPRESS! ❤️</p>
+          <div style="margin-top: 20px; font-size: 2rem;">💕💗💖💘💝</div>
+        </div>
+        <button class="restart-btn" id="fullRestartBtn" style="background: white; color: #c31432; margin-top: 20px;">🌟 Play Both Games Again 🌟</button>
+      </div>
+    `;
+    
+    document.getElementById("fullRestartBtn")?.addEventListener("click", () => {
+      fullRestart();
+    });
+  }
+
   function renderGame2() {
     const container = document.getElementById("game2UI");
+    
+    // Check if both games are completed
+    if (game2Completed) {
+      showGrandFinale();
+      return;
+    }
+    
     if (loveMessageShown) {
       container.innerHTML = `
         <div class="love-message">
@@ -457,16 +585,33 @@
           <h2 style="color:#c31432; margin: 15px 0;">YOU SAID YES! 🎉</h2>
           <p style="font-size: 1.2rem;">My heart just exploded with happiness! I love you more than anything in this universe and beyond! 🌌💕</p>
           <p style="margin-top: 15px; font-weight: bold;">You're the best thing that ever happened to me. Forever and always, my love! 💍✨</p>
+          <div class="auto-next-message" style="background: #ff6b6b; color: white; margin-top: 20px;">
+            ✨ Preparing your grand finale... ✨
+          </div>
           <div style="margin-top: 20px;">
             <button class="restart-btn" id="resetLoveGame">💝 Play Again 💝</button>
           </div>
         </div>
       `;
+      
       document.getElementById("resetLoveGame")?.addEventListener("click", () => {
+        if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
         loveMessageShown = false;
         noButtonAttempts = 0;
+        game2Completed = false;
+        document.getElementById("tabGame2").classList.remove("completed");
         renderGame2();
       });
+      
+      // Mark game as completed and show grand finale
+      game2Completed = true;
+      document.getElementById("tabGame2").classList.add("completed");
+      
+      // Auto transition to grand finale after 2 seconds
+      if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+      autoTransitionTimeout = setTimeout(() => {
+        renderGame2(); // This will now show grand finale
+      }, 2500);
       return;
     }
 
@@ -481,7 +626,7 @@
           <button class="love-btn love-no" id="loveNoBtn">NO 😢</button>
         </div>
         <div id="loveHint" style="font-size: 0.9rem; color: #b45c6b; margin-top: 15px;">
-          💋 (spoiler: the NO button might be a little shy...) 💋
+          💋 (try to say NO... if you can!) 💋
         </div>
       </div>
     `;
@@ -490,14 +635,12 @@
     const noBtn = document.getElementById("loveNoBtn");
     const buttonsArea = document.getElementById("loveButtonsArea");
 
-    // YES button action
     yesBtn.addEventListener("click", () => {
       triggerMiniConfetti();
       loveMessageShown = true;
       renderGame2();
     });
 
-    // NO button magic: runs away, dodges cursor, becomes unclickable
     let moveCount = 0;
     const maxMoves = 8;
 
@@ -505,11 +648,10 @@
       if (!noBtn || loveMessageShown) return;
       moveCount++;
       
-      // Get container boundaries
       const areaRect = buttonsArea.getBoundingClientRect();
       const btnRect = noBtn.getBoundingClientRect();
-      const maxX = areaRect.width - btnRect.width - 10;
-      const maxY = areaRect.height - btnRect.height - 10;
+      const maxX = Math.max(0, areaRect.width - btnRect.width - 10);
+      const maxY = Math.max(0, areaRect.height - btnRect.height - 10);
       
       let newX = Math.random() * maxX;
       let newY = Math.random() * maxY;
@@ -518,7 +660,6 @@
       noBtn.style.left = `${newX}px`;
       noBtn.style.top = `${newY}px`;
       
-      // Change text to be playful
       const noTexts = ["NO? 🥺", "sure? 💔", "can't!", "❤️", "try me!", "never~ 💕", "YES only 💘", "come on! 💗"];
       if (moveCount < noTexts.length) {
         noBtn.textContent = noTexts[moveCount];
@@ -526,7 +667,6 @@
         noBtn.textContent = "💖 JUST YES 💖";
       }
       
-      // After several moves, make it disappear temporarily
       if (moveCount >= maxMoves) {
         noBtn.style.opacity = "0";
         noBtn.style.pointerEvents = "none";
@@ -539,20 +679,17 @@
           }
         }, 500);
       } else {
-        // Shrink slightly each time
         let currentScale = 1 - (moveCount * 0.03);
         if (currentScale < 0.7) currentScale = 0.7;
         noBtn.style.transform = `scale(${currentScale})`;
       }
     }
 
-    // Attach hover & click evasion
     if (noBtn) {
       noBtn.addEventListener("mouseenter", moveNoButton);
       noBtn.addEventListener("click", (e) => {
         e.preventDefault();
         moveNoButton();
-        // Additional funny alert if clicked
         const messages = ["Nice try! 😘", "You can't say NO! 💕", "I know you love me! 💗", "Just say YES already! 🥰"];
         const hintDiv = document.getElementById("loveHint");
         if (hintDiv) {
@@ -567,7 +704,7 @@
     }
   }
 
-  // ==================== Confetti Helper ====================
+  // ==================== Helper Functions ====================
   function triggerMiniConfetti() {
     const canvas = document.createElement('canvas');
     canvas.style.position = 'fixed';
@@ -592,7 +729,6 @@
         vx: (Math.random() - 0.5) * 2
       });
     }
-    let anim;
     function draw() {
       if(!canvas.parentNode) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -613,13 +749,41 @@
     setTimeout(() => { if(canvas.parentNode) canvas.remove(); }, 2500);
   }
 
+  function triggerHeavyConfetti() {
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => triggerMiniConfetti(), i * 500);
+    }
+  }
+
+  function fullRestart() {
+    if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+    
+    // Reset all game states
+    resetGame1();
+    game1Finished = false;
+    game1Completed = false;
+    loveMessageShown = false;
+    noButtonAttempts = 0;
+    game2Completed = false;
+    
+    // Reset tabs
+    document.getElementById("tabGame1").classList.remove("completed", "active");
+    document.getElementById("tabGame2").classList.remove("completed", "active");
+    document.getElementById("tabGame1").classList.add("active");
+    
+    // Switch to game 1
+    switchToGame1();
+    
+    // Re-render game 1
+    renderGame1();
+  }
+
   // ==================== Tab Switching ====================
   function switchToGame1() {
     document.getElementById("game1Content").classList.remove("hidden");
     document.getElementById("game2Content").classList.add("hidden");
     document.getElementById("tabGame1").classList.add("active");
     document.getElementById("tabGame2").classList.remove("active");
-    renderGame1(); // refresh in case reset needed
   }
 
   function switchToGame2() {
@@ -630,10 +794,17 @@
     renderGame2();
   }
 
-  document.getElementById("tabGame1").addEventListener("click", switchToGame1);
-  document.getElementById("tabGame2").addEventListener("click", switchToGame2);
+  document.getElementById("tabGame1").addEventListener("click", () => {
+    if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+    switchToGame1();
+  });
+  
+  document.getElementById("tabGame2").addEventListener("click", () => {
+    if (autoTransitionTimeout) clearTimeout(autoTransitionTimeout);
+    switchToGame2();
+  });
 
-  // Floating hearts on click anywhere
+  // Floating hearts on click
   document.body.addEventListener('click', function(e) {
     if(e.target.closest('.btn') || e.target.closest('.love-btn')) return;
     const heart = document.createElement('div');
@@ -654,10 +825,9 @@
     }, 10);
   });
 
-  // Initialize Game 1
+  // Initialize
   resetGame1();
   renderGame1();
-  // Game 2 will render when tab is clicked
 </script>
 </body>
 </html>
